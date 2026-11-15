@@ -1,6 +1,6 @@
 id = "personal_cheats"
-name = "Doker's Pokopia Cheats"
-version = "1.0.0"
+name = "Simple Cheats"
+version = "1.0.1"
 authors = ["Doker"]
 description = "Add 1,000 Life Coins with F5, refill PP and bag stacks, and choose the Water Gun area. Single-player only."
 license = "MIT"

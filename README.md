@@ -1,6 +1,6 @@
-# Doker's Pokopia Cheats
+# Simple Cheats
 
-A small Modtopia code mod for Pokémon Pokopia 2.0.1a on Recompia and other compatible Modtopia hosts. By Doker.
+A small Modtopia code mod for Pokémon Pokopia 2.0.1a on Recompia and other compatible Modtopia hosts. Created by Doker.
 
 ## Features
 
@@ -13,7 +13,7 @@ The mod only changes gameplay in an offline world. It does not change walking sp
 
 ## Install
 
-1. Download `personal_cheats-1.0.0.pkmod` from [Releases](https://github.com/tenn6871/poch/releases).
+1. Download `personal_cheats-1.0.1.pkmod` from [Releases](https://github.com/tenn6871/poch/releases).
 2. Place it in your game's `mods` folder.
 3. Enable it in the launcher. If the launcher asks to rebuild the game code or approve a changed code mod, follow its prompts.
 4. Open the in-game Mods settings to change PP, bag stacks or Water Gun area.

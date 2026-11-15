@@ -86,7 +86,7 @@ static int on_frame(MtMod *mod, const MtEvent *event, void *user) {
             const int32_t added = coins + 1000;
             if (H->mem_write(save + COINS_OFFSET, &added, sizeof added) == MT_OK &&
                 MT_HOST_HAS(H, notify) && H->notify)
-                H->notify(mod, "라이프 코인 +1,000", 2.0);
+                H->notify(mod, "Life Coins +1,000", 2.0);
         }
     }
     if (H->config_bool(mod, "pp")) {
