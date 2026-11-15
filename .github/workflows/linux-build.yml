@@ -1,0 +1,29 @@
+name: Linux build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and pack
+        run: bash build.sh
+      - name: Check package contents
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          package = next(Path('dist').glob('*-linux-x64.pkmod'))
+          with ZipFile(package) as archive:
+              assert archive.testzip() is None
+              assert sorted(archive.namelist()) == ['bin/linux-x64/mod.so', 'mod.toml']
+          print(package)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: simple-cheats-linux-x64
+          path: dist/*-linux-x64.pkmod

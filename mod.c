@@ -1,7 +1,19 @@
 #include <modtopia/modtopia.h>
 #include <stdint.h>
 #include <string.h>
+#ifdef _WIN32
 #include <windows.h>
+typedef LONG AtomicInt;
+static LONG atomic_get(volatile AtomicInt *value) { return InterlockedCompareExchange(value, 0, 0); }
+static void atomic_set(volatile AtomicInt *value, LONG desired) { InterlockedExchange(value, desired); }
+static int atomic_mark(volatile AtomicInt *value) { return InterlockedCompareExchange(value, 1, 0) == 0; }
+#else
+#include <stdatomic.h>
+typedef atomic_int AtomicInt;
+static int atomic_get(AtomicInt *value) { return atomic_load(value); }
+static void atomic_set(AtomicInt *value, int desired) { atomic_store(value, desired); }
+static int atomic_mark(AtomicInt *value) { int expected = 0; return atomic_compare_exchange_strong(value, &expected, 1); }
+#endif
 
 MT_DECLARE_MOD()
 
@@ -21,8 +33,8 @@ enum {
 static const MtHost *H;
 static uint64_t g_save_ptr, g_game_mgr_ptr, g_slot_vtable;
 static int g_f5_was_down;
-static volatile LONG g_offline;
-static volatile LONG g_water_seen, g_pp_peak;
+static AtomicInt g_offline;
+static AtomicInt g_water_seen, g_pp_peak;
 static int8_t g_water_offsets[100][2];
 
 static void build_water_offsets(void) {
@@ -67,7 +79,7 @@ static int on_frame(MtMod *mod, const MtEvent *event, void *user) {
     const int f5_down = H->key_down(mod, "F5") != 0;
     const int add_coins = f5_down && !g_f5_was_down;
     g_f5_was_down = f5_down;
-    InterlockedExchange(&g_offline, 0);
+    atomic_set(&g_offline, 0);
     uint64_t save = 0, mgr = 0;
     uint8_t session = 0;
     uint32_t permissions = 0;
@@ -75,7 +87,7 @@ static int on_frame(MtMod *mod, const MtEvent *event, void *user) {
         H->mem_read(mgr + WORLD_PERMISSIONS, &permissions, sizeof permissions) != MT_OK || !permissions ||
         H->mem_read(mgr + ONLINE_FLAG, &session, sizeof session) != MT_OK || (session & 1))
         return MT_EVENT_CONTINUE;
-    InterlockedExchange(&g_offline, 1);
+    atomic_set(&g_offline, 1);
     if (H->mem_read(g_save_ptr, &save, sizeof save) != MT_OK || !save)
         return MT_EVENT_CONTINUE;
 
@@ -93,10 +105,10 @@ static int on_frame(MtMod *mod, const MtEvent *event, void *user) {
         uint16_t pp[2] = {0, 0};
         if (H->mem_read(save + PP_OFFSET, pp, sizeof pp) == MT_OK &&
             pp[1] > 0 && pp[1] <= 10000 && pp[0] <= 10000) {
-            LONG peak = InterlockedCompareExchange(&g_pp_peak, 0, 0);
-            LONG observed = pp[0] > pp[1] ? pp[0] : pp[1];
+            int peak = atomic_get(&g_pp_peak);
+            int observed = pp[0] > pp[1] ? pp[0] : pp[1];
             if (observed > peak) {
-                InterlockedExchange(&g_pp_peak, observed);
+                atomic_set(&g_pp_peak, observed);
                 peak = observed;
             }
             if (pp[0] < peak) {
@@ -136,7 +148,7 @@ static int on_frame(MtMod *mod, const MtEvent *event, void *user) {
 static int water_area_count(MtHookCtx *ctx, void *user) {
     MtMod *mod = (MtMod *)user;
     int desired = water_count(mod);
-    if (!InterlockedCompareExchange(&g_offline, 0, 0) || !desired) return MT_CONTINUE;
+    if (!atomic_get(&g_offline) || !desired) return MT_CONTINUE;
     const uint64_t sp = H->reg_get(ctx, MT_REG_SP);
     uint8_t count = 0;
     if (!sp || H->mem_read(sp + 0x182, &count, 1) != MT_OK || !count) return MT_CONTINUE;
@@ -148,7 +160,7 @@ static int water_area_count(MtHookCtx *ctx, void *user) {
 static int water_cell(MtHookCtx *ctx, void *user) {
     MtMod *mod = (MtMod *)user;
     int desired = water_count(mod);
-    if (!InterlockedCompareExchange(&g_offline, 0, 0) || !desired) return MT_CONTINUE;
+    if (!atomic_get(&g_offline) || !desired) return MT_CONTINUE;
     const uint64_t sp = H->reg_get(ctx, MT_REG_SP);
     const uint64_t target = H->reg_get(ctx, MT_REG_X0 + 24);
     const uint64_t index = H->reg_get(ctx, MT_REG_X0 + 22);
@@ -161,7 +173,7 @@ static int water_cell(MtHookCtx *ctx, void *user) {
     coords[2] = (int16_t)(coords[2] + g_water_offsets[index][1]);
     if (H->mem_write(sp + 0x4a, coords, sizeof coords) == MT_OK) {
         H->reg_set(ctx, MT_REG_X0 + 25, sp + 0x4a);
-        if (InterlockedCompareExchange(&g_water_seen, 1, 0) == 0)
+        if (atomic_mark(&g_water_seen))
             mt_logf(H, mod, MT_LOG_INFO, "water gun area set to %d cells", desired);
     }
     return MT_CONTINUE;

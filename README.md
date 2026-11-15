@@ -22,9 +22,17 @@ Back up your save before using code mods. This release targets game version 2.0.
 
 ## Build
 
-Build on Windows from a Visual Studio x64 Developer Command Prompt. Set `MODTOPIA_INCLUDE` to the SDK include directory containing `modtopia/modtopia.h`, then run `build.cmd`. The script builds `mod.dll`, packs the `.pkmod`, and prints its SHA-256.
+The Modtopia SDK header is included under `sdk/` (MIT license). You can set `MODTOPIA_INCLUDE` to another SDK include directory containing `modtopia/modtopia.h`.
 
-The package contains only `mod.toml` and the native DLL. No game files, game code, keys or DLC are included.
+### Windows
+
+From a Visual Studio x64 Developer Command Prompt, run `build.cmd`. It builds `mod.dll` and `dist/personal_cheats-1.0.1-windows-x64.pkmod`.
+
+### Linux
+
+Install a C compiler (GCC or Clang) and Python 3.11 or later. Run `bash build.sh`. It builds `mod.so` and a platform-specific `.pkmod` for x86-64 or ARM64 Linux. You can set `CC` and `PYTHON` to choose the compiler and Python executable. The script prints the package's SHA-256.
+
+Each package contains only `mod.toml` and the native library for its platform. No game files, game code, keys or DLC are included.
 
 ## License
 
