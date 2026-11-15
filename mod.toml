@@ -1,0 +1,55 @@
+id = "personal_cheats"
+name = "Doker's Pokopia Cheats"
+version = "1.0.0"
+authors = ["Doker"]
+description = "Add 1,000 Life Coins with F5, refill PP and bag stacks, and choose the Water Gun area. Single-player only."
+license = "MIT"
+loader = ">=0.2.0 <1.0.0"
+game = ["2.0.1"]
+affects = "gameplay"
+
+[[settings]]
+key = "coins"
+type = "bool"
+default = true
+label = "F5 adds 1,000 Life Coins"
+
+[[settings]]
+key = "pp"
+type = "bool"
+default = true
+label = "Refill ability PP"
+
+[[settings]]
+key = "items"
+type = "bool"
+default = true
+label = "Refill bag item stacks"
+
+[[settings]]
+key = "item_count"
+type = "number"
+min = 1
+max = 99
+step = 1
+default = 99
+label = "Target stack count"
+
+[[hooks."2.0.1"]]
+name = "water_area_count"
+target = "main+0x5a1384"
+word = 0x39460be8
+kind = "take_over"
+
+[[hooks."2.0.1"]]
+name = "water_cell"
+target = "main+0x5a1494"
+word = 0x360000b3
+kind = "take_over"
+
+[[settings]]
+key = "water_area"
+type = "choice"
+choices = ["Game default", "25 cells", "50 cells", "75 cells", "100 cells"]
+default = "25 cells"
+label = "Water Gun area"
